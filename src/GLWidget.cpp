@@ -102,18 +102,20 @@ void GLWidget::paintGL()
 	glScalef(m_scale, m_scale, m_scale);
 
 	// Draw scene
-	drawScene();
+	drawScene(modelViewMatrix);
 
 	glPopMatrix();
 }
 
 // Fonction rendu de la scène
-void GLWidget::drawScene()
+void GLWidget::drawScene(QMatrix4x4 mvMatrix)
 {
 	Cone cone;
+	//cone.apex = { 0, 0, 90 };
 	drawCone(cone, precision, QVector3D(0, 1, 0));
-	vector<QVector3D> spirals = DrawSpiral(cone, thetaLimit, precision);
-	for (int i = 0; i < 0; i++)
+	vector<QVector3D> spirals = DrawSpiral(cone, thetaLimit, precision, -PI*5);
+	//vector<QVector3D> spirals2 = DrawSpiral(cone, thetaLimit, precision, -PI * 2 + 1);
+	/*for (int i = 0; i < 0; i++)
 	{
 		QVector3D c = cone.apex - cone.d * cone.h;
 		QVector3D M = spirals[i];
@@ -126,17 +128,13 @@ void GLWidget::drawScene()
 		co.r = 50;
 		co.apex = M + co.d*co.h;
 		drawCone(co, precision, QVector3D(0, 0, 1));
-	}
+	}*/
+
+	DrawSpiral2D();
 
 	// Afficher la grille et les Axes dans la scène
 	if (showGrid)
 		drawGridandAxes();
-
-	// Affichage des points de controle et des vertex du patch
-	if (showPts)
-	{
-		
-	}
 }
 
 // Fonction pour dessiner un cône
@@ -176,13 +174,28 @@ vector<QVector3D> GLWidget::drawCone(Cone cone, int n, QVector3D color)
 	pts.push_back(c);
 	pts.push_back(cone.apex);
 	//drawPoints(pts, QVector3D(255,0,0), 10);
+
+	// Affichage des points de controle et des vertex du patch
+	if (showPts)
+	{
+		glVector3D(QVector3D(255, 0, 0), false);
+		glBegin(GL_LINES);
+		for (int i = 0; i < pts.size() - 1; i++)
+		{
+			glVertex3f(pts[pts.size() - 1].x(), pts[pts.size() - 1].y(), pts[pts.size() - 1].z());
+			glVertex3f(pts[i].x(), pts[i].y(), pts[i].z());
+			//glVertex3f(pts[i + 1].x(), pts[i + 1].y(), pts[i + 1].z());
+		}
+		glEnd();
+	}
+
 	return pts;
 }
 
-vector<QVector3D> GLWidget::DrawSpiral(Cone cone, float thetaLimit, int precision)
+vector<QVector3D> GLWidget::DrawSpiral(Cone cone, float thetaLimit, int precision, float theta)
 {
 	float x, y, z;
-	float theta = -PI;
+	//float theta = -PI;
 	float angInc = (thetaLimit-theta) / precision;
 	float k = cone.r / pow(E, RATIO*thetaLimit);
 	float expo = k*pow(E, RATIO*theta);
@@ -195,16 +208,18 @@ vector<QVector3D> GLWidget::DrawSpiral(Cone cone, float thetaLimit, int precisio
 	
 	while (theta <= thetaLimit)
 	{
-		QVector3D cen = cone.apex - cone.d * cone.h;
-		QVector3D normal = QVector3D::crossProduct(cone.apex - cen, M - cen);
-		normal = QVector3D::crossProduct(M - cone.apex, normal);
-		normal.normalize();
-		Cone c;
-		c.d = normal;
-		c.h = abs(z) - cone.apex.z();
-		c.r = c.h / cone.h * cone.r;
-		c.apex = M + c.d*c.h;
-		drawCone(c, precision, QVector3D(0, 0, 1));
+			QVector3D cen = cone.apex - cone.d * cone.h;
+			QVector3D normal = QVector3D::crossProduct(cone.apex - cen, M - cen);
+			normal = QVector3D::crossProduct(M - cone.apex, normal);
+			normal.normalize();
+			Cone c;
+			c.d = normal;
+			c.h = abs(z) - cone.apex.z();
+			c.h /= 2;
+			c.r = c.h / cone.h * cone.r;
+			//c.r /= 1.1;
+			c.apex = M + c.d*c.h;
+			drawCone(c, precision, QVector3D(0, 0, 1));
 
 		glBegin(GL_LINES);
 		glVertex3f(x, y, z);
@@ -220,6 +235,87 @@ vector<QVector3D> GLWidget::DrawSpiral(Cone cone, float thetaLimit, int precisio
 	}
 	drawPoints(spirals, QVector3D(255, 0, 0), 10);
 	return spirals;
+}
+
+
+// centerX-- X origin of the spiral.
+// centerY-- Y origin of the spiral.
+// radius--- Distance from origin to outer arm.
+// sides---- Number of points or sides along the spiral's arm.
+// coils---- Number of coils or full rotations. (Positive numbers spin clockwise, negative numbers spin counter-clockwise)
+// rotation- Overall rotation of the spiral. ('0'=no rotation, '1'=360 degrees, '180/360'=180 degrees)
+//
+
+void  GLWidget::logSpiral(float centerX, float centerY, float radius, float sides, float coils, float rotation, int val) {
+
+	//
+	// How far to rotate around center for each side.
+	float aroundStep = coils / sides;// 0 to 1 based.
+									 //
+									 // Convert aroundStep to radians.
+	float aroundRadians = aroundStep * 2 * 3.14f;//Math.PI;
+												 //
+												 // Convert rotation to radians.
+	rotation *= 2 * 3.14f; //Math.PI;
+						   //
+						   // For every side, step around and away from center.
+						   //glBegin(GL_LINE);
+	for (int i = 1; i <= sides; i++) {
+		//
+		// How far away from center
+		float away = pow(radius, i / sides);//radius pow((sqrt(5)+1)/2, i)*radius //pow((sqrt(5) + 1) / 2, i/sides*coils)*
+											//
+											// How far around the center.
+		float around = i * aroundRadians + rotation /*+ rotation*i / sides*/;
+		//
+		// Convert 'around' and 'away' to X and Y.
+		float x = centerX + cos(around) * away;
+		float y = centerY + sin(around) * away;
+		//
+		// Now that you know it, do it.
+		//glVertex3f(x, y, 0);
+		vec.push_back(QVector3D(x, y, 0));
+		if (val > 0) {
+			for (float t = 0; t < 1; t += 0.125)
+			{
+				logSpiral(x, y, pprev.distanceToPoint(QVector3D(x, y, 0))/2, 70, 2, t, val - 1); //(1/sides*i, 2)
+			}
+		}
+		pprev = QVector3D(x, y, 0);
+	}
+	//glEnd();
+}
+
+
+void GLWidget::DrawSpiral2D()
+{
+	//  (centerX, centerY, radius, sides, coils, rotation, iteration)
+	//logSpiral(0, 0, 10, 70, 14, 0.4, 1);
+	if(vec.size() < 2)
+	for (float i = 0; i < 1; i += 0.125)
+	{
+		//logSpiral(0, 0, 40, 70, 2, i, 1);
+		logSpiral(0, 0, 40, 70, -2, i, 0);
+	}
+	/*for (float i = 0; i < 1; i += 0.07)
+	{
+	logSpiral(0, 0, 40, 70, 1, i, 0);
+	}*/
+
+	//logSpiral(0, 0, 40, 70, 2, 0.5, 0);
+	//logSpiral(0, 0, 320, 70, 14, .5, 0);
+	//
+	//
+
+	glBegin(GL_LINES);
+	for (int i = 0; i < vec.size()-1; i++)
+	{
+		//if (i / 70 != 1) {
+			glVertex3f(vec[i].x(), vec[i].y(), vec[i].z());
+			glVertex3f(vec[i + 1].x(), vec[i + 1].y(), vec[i + 1].z());
+		//}
+	}
+	glEnd();
 }
 
 

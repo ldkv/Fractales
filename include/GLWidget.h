@@ -56,7 +56,7 @@ public:
 	
 	// Paramètres Cône & Sprial
 	int Ns = 10;
-	int precision = 50;
+	int precision = 40;
 	float thetaLimit = PI;
 
 protected:
@@ -95,7 +95,9 @@ private:
 	// Dessiner des points
 	void drawPoints(vector<QVector3D> points, QVector3D color, int ptSize);
 	vector<QVector3D> drawCone(Cone, int, QVector3D);
-	vector<QVector3D> DrawSpiral(Cone cone, float thetaLimit, int precision);
+	vector<QVector3D> DrawSpiral(Cone cone, float thetaLimit, int precision, float theta);
+	void DrawSpiral2D();
+	void logSpiral(float centerX, float centerY, float radius, float sides, float coils, float rotation, int val);
 	// Textures
 	void GLWidget::LoadGLTextures(const char * name);
 
@@ -137,4 +139,7 @@ private:
 	bool showLightSpecular = false;
 
 	QTimer *t_Timer;
+
+	vector<QVector3D> vec;
+	QVector3D pprev = QVector3D(0, 0, 0);
 };
