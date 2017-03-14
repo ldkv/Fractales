@@ -56,7 +56,7 @@ public:
 	
 	// Paramètres Cône & Sprial
 	int Ns = 10;
-	int precision = 40;
+	int precision = 50;
 	float thetaLimit = PI;
 
 protected:

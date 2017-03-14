@@ -102,13 +102,13 @@ void GLWidget::paintGL()
 	glScalef(m_scale, m_scale, m_scale);
 
 	// Draw scene
-	drawScene(modelViewMatrix);
+	drawScene();
 
 	glPopMatrix();
 }
 
 // Fonction rendu de la scène
-void GLWidget::drawScene(QMatrix4x4 mvMatrix)
+void GLWidget::drawScene()
 {
 	Cone cone;
 	//cone.apex = { 0, 0, 90 };
@@ -175,7 +175,6 @@ vector<QVector3D> GLWidget::drawCone(Cone cone, int n, QVector3D color)
 	pts.push_back(cone.apex);
 	//drawPoints(pts, QVector3D(255,0,0), 10);
 
-	// Affichage des points de controle et des vertex du patch
 	if (showPts)
 	{
 		glVector3D(QVector3D(255, 0, 0), false);
@@ -208,18 +207,18 @@ vector<QVector3D> GLWidget::DrawSpiral(Cone cone, float thetaLimit, int precisio
 	
 	while (theta <= thetaLimit)
 	{
-			QVector3D cen = cone.apex - cone.d * cone.h;
-			QVector3D normal = QVector3D::crossProduct(cone.apex - cen, M - cen);
-			normal = QVector3D::crossProduct(M - cone.apex, normal);
-			normal.normalize();
-			Cone c;
-			c.d = normal;
-			c.h = abs(z) - cone.apex.z();
-			c.h /= 2;
-			c.r = c.h / cone.h * cone.r;
-			//c.r /= 1.1;
-			c.apex = M + c.d*c.h;
-			drawCone(c, precision, QVector3D(0, 0, 1));
+		QVector3D cen = cone.apex - cone.d * cone.h;
+		QVector3D normal = QVector3D::crossProduct(cone.apex - cen, M - cen);
+		normal = QVector3D::crossProduct(M - cone.apex, normal);
+		normal.normalize();
+		Cone c;
+		c.d = normal;
+		c.h = abs(z) - cone.apex.z();
+		c.h /= 2;
+		c.r = c.h / cone.h * cone.r;
+		//c.r /= 1.1;
+		c.apex = M + c.d*c.h;
+		drawCone(c, precision, QVector3D(0, 0, 1));
 
 		glBegin(GL_LINES);
 		glVertex3f(x, y, z);
