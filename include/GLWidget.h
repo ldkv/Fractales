@@ -31,7 +31,7 @@ struct Cone
 {
 	QVector3D apex = { 0, 0, 0 };
 	QVector3D d = { 0, 0, 1 };
-	float h = 180;
+	float h = 200;
 	float r = 100;
 };
 
@@ -87,7 +87,7 @@ public slots:
 
 private:
 	// Fonction rendu de la scène
-	void drawScene(QMatrix4x4 mvMatrix);
+	void drawScene();
 	// Conversion de coordonnées d'écran à coordonnées de la scène OPENGL
 	QVector3D convertXY(int X, int Y);
 	// Dessiner la grille et les axes
